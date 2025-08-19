@@ -1,4 +1,5 @@
-// server.js
+// server.js - Versão com Detecção de Colisão
+
 const http = require('http');
 const { Server } = require("socket.io");
 
@@ -10,10 +11,17 @@ const io = new Server(server, {
 let players = {};
 
 function getRandomInitialPosition() {
-    return {
-        x: Math.floor(Math.random() * 10),
-        y: Math.floor(Math.random() * 10)
-    };
+    // Procura por um tile inicial que não esteja ocupado
+    let pos;
+    let isOccupied = true;
+    while (isOccupied) {
+        pos = {
+            x: Math.floor(Math.random() * 10),
+            y: Math.floor(Math.random() * 10)
+        };
+        isOccupied = Object.values(players).some(p => p.x === pos.x && p.y === pos.y);
+    }
+    return pos;
 }
 
 io.on('connection', (socket) => {
@@ -32,12 +40,29 @@ io.on('connection', (socket) => {
         io.emit('updatePlayers', players);
     });
 
+    // --- LÓGICA DE COLISÃO ADICIONADA AQUI ---
     socket.on('playerMove', (targetPos) => {
-        if (players[socket.id]) {
+        let isOccupied = false;
+        // Verifica se a posição de destino já está ocupada por outro jogador
+        for (const playerId in players) {
+            if (playerId !== socket.id) { // Não checar contra si mesmo
+                const otherPlayer = players[playerId];
+                if (otherPlayer.x === targetPos.x && otherPlayer.y === targetPos.y) {
+                    isOccupied = true;
+                    break;
+                }
+            }
+        }
+
+        // Se a casa NÃO estiver ocupada, permite o movimento
+        if (!isOccupied && players[socket.id]) {
             players[socket.id].x = targetPos.x;
             players[socket.id].y = targetPos.y;
+            // Avisa todos os jogadores sobre a nova posição
             io.emit('updatePlayers', players);
         }
+        // Se a casa estiver ocupada, o servidor simplesmente ignora o pedido.
+        // O jogador não se moverá e permanecerá na sua última posição válida.
     });
 
     socket.on('playerChat', (message) => {
@@ -55,5 +80,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Servidor Multiplayer rodando na porta ${PORT}`);
+    console.log(`Servidor Multiplayer (com colisão) rodando na porta ${PORT}`);
 });
