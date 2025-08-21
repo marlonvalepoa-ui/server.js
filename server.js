@@ -36,6 +36,7 @@ io.on('connection', (socket) => {
             id: socket.id,
             name: playerData.name,
             color: playerData.color,
+            booIndex: data.booIndex,
             x: initialPosition.x,
             y: initialPosition.y
         };
