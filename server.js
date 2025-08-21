@@ -1,5 +1,3 @@
-// server.js - Versão com Spawn Seguro e Colisão
-
 const http = require('http');
 const { Server } = require("socket.io");
 
@@ -36,10 +34,11 @@ io.on('connection', (socket) => {
             id: socket.id,
             name: playerData.name,
             color: playerData.color,
+            booIndex: playerData.booIndex, // <-- ADICIONADO: Salva a variação de personagem escolhida
             x: initialPosition.x,
             y: initialPosition.y
         };
-        console.log(`[ENTROU] Jogador '${playerData.name}' (${socket.id})`);
+        console.log(`[ENTROU] Jogador '${playerData.name}' (${socket.id}) escolheu o Boo #${playerData.booIndex}`);
         io.emit('updatePlayers', players);
     });
 
@@ -69,4 +68,5 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Servidor Multiplayer (com colisão e spawn seguro) rodando na porta ${PORT}`);
-});
+});```
+
